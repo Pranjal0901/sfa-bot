@@ -1,33 +1,35 @@
-from flask import Flask, render_template, jsonify, request
+from fastapi import FastAPI
+from pydantic import BaseModel
+from src.orchestrator.intent_orchestrator import extract_intent
 
-# -------------------------------------------------------------------------
-# Initialize Flask app
-# -------------------------------------------------------------------------
-app = Flask(__name__)
+app = FastAPI(title="SFA Chat Test API")
 
-# -------------------------------------------------------------------------
-# Flask Routes
-# -------------------------------------------------------------------------
-@app.route("/")
-def index():
-    """Render main chatbot interface"""
-    return render_template("chatbot.html")
+# -------------------------
+# Request Model
+# -------------------------
+class ChatRequest(BaseModel):
+    query: str
 
-@app.route("/ask", methods=["POST"])
-def ask():
-    """Handle user query and return RAG-generated response"""
-    user_input = request.json.get("message", "")
-    if not user_input.strip():
-        return jsonify({"response": "Please enter a valid question."})
-    
-    print(f"[USER] {user_input}")
-    # answer = rag_pipeline.search_and_summarize(user_input)
-    # print(f"[BOT] {answer}")
-    # return jsonify({"response": answer})
+# -------------------------
+# Response Model
+# -------------------------
+class ChatResponse(BaseModel):
+    query: str
+    intent: str
+    confidence: float
+    source: str
 
 
-# -------------------------------------------------------------------------
-# Run app
-# -------------------------------------------------------------------------
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+# -------------------------
+# Test Endpoint
+# -------------------------
+@app.post("/sfa-chat-test", response_model=ChatResponse)
+def sfa_chat_test(payload: ChatRequest):
+    intent, confidence, source = extract_intent(payload.query)
+
+    return ChatResponse(
+        query=payload.query,
+        intent=intent,
+        confidence=confidence,
+        source=source,
+    )

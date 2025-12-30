@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chatbot</title>
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: #212121;
+        font-family: "Inter", Arial, sans-serif;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+    }
+
+    .chat-wrapper {
+        width: 100%;
+        max-width: 850px;
+        height: 90vh;
+        background: #1a1a1a;
+        border-radius: 14px;
+        border: 1px solid #2b2b2b;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .chat-box {
+        flex: 1;
+        padding: 25px;
+        overflow-y: auto;
+    }
+
+    .msg-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 22px;
+    }
+
+    /* Avatars */
+    .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .bot-avatar {
+        background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712107.png');
+    }
+
+    .user-avatar {
+        background-image: url('https://cdn-icons-png.flaticon.com/512/3177/3177440.png');
+    }
+
+    /* Message bubble style (same for both) */
+    .message {
+        max-width: 80%;
+        padding: 16px 20px;
+        border-radius: 18px;        /* Smooth edges */
+        font-size: 15px;
+        line-height: 1.5;
+        background: #2e2e2e;       /* Same neutral dark color */
+        color: #eaeaea;
+    }
+
+    /* Align user bubble to the right */
+    .msg-row.user {
+        flex-direction: row-reverse;
+    }
+
+    /* INPUT BAR (ChatGPT Style) */
+    .input-bar-container {
+        padding: 20px;
+        background: #1a1a1a;
+        border-top: 1px solid #2b2b2b;
+    }
+
+    .input-wrapper {
+        width: 100%;
+        background: #2a2a2a;
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        padding: 14px 20px;
+        box-sizing: border-box;
+        border: 1px solid #3a3a3a;
+    }
+
+    .plus-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid #555;
+        color: #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        margin-right: 12px;
+        cursor: pointer;
+    }
+
+    #user-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: white;
+        font-size: 16px;
+    }
+
+    #user-input::placeholder {
+        color: #aaaaaa;
+    }
+
+</style>
+</head>
+
+<body>
+
+<div class="chat-wrapper">
+
+    <div class="chat-box" id="chat-box">
+        <div class="msg-row">
+            <div class="avatar bot-avatar"></div>
+            <div class="message">Hello! 👋 How can I assist you today?</div>
+        </div>
+    </div>
+
+    <div class="input-bar-container">
+        <div class="input-wrapper">
+            <div class="plus-btn">+</div>
+            <input id="user-input" type="text" placeholder="Ask anything" />
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // SEND ON ENTER KEY
+    document.getElementById("user-input").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") sendMessage();
+    });
+
+    async function sendMessage() {
+        const input = document.getElementById("user-input");
+        const chatBox = document.getElementById("chat-box");
+        const text = input.value.trim();
+
+        if (!text) return;
+
+        // User bubble
+        chatBox.innerHTML += `
+            <div class="msg-row user">
+                <div class="avatar user-avatar"></div>
+                <div class="message">${text}</div>
+            </div>
+        `;
+        chatBox.scrollTop = chatBox.scrollHeight;
+        input.value = "";
+
+        // Backend request
+        const response = await fetch("/ask", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ message: text })
+        });
+
+        const data = await response.json();
+
+        // Bot bubble
+        chatBox.innerHTML += `
+            <div class="msg-row">
+                <div class="avatar bot-avatar"></div>
+                <div class="message">${data.response}</div>
+            </div>
+        `;
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+</script>
+
+</body>
+</html>
